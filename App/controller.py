@@ -24,7 +24,6 @@ import config as cf
 import model
 import csv
 
-
 """
 El controlador se encarga de mediar entre la vista y el modelo.
 """
@@ -36,3 +35,29 @@ El controlador se encarga de mediar entre la vista y el modelo.
 # Funciones de ordenamiento
 
 # Funciones de consulta sobre el catálogo
+
+
+def req1():
+    pass
+
+
+def req2(Cod1,Cod2):
+    pass
+
+
+def req3(ciudadOrigen,ciudadDestino):
+    pass
+
+
+def req4(ciudadOrigen, cantidadMillas):
+    pass
+
+
+def req5(codIATA):
+    pass
+
+
+def bono(ciudadOrigen, ciudadDestino):
+    pass
+
+

@@ -23,6 +23,7 @@
 import config as cf
 import sys
 import controller
+import folium
 from DISClib.ADT import list as lt
 assert cf
 
@@ -35,10 +36,15 @@ operación solicitada
 """
 
 def printMenu():
-    print("Bienvenido")
-    print("1- Cargar información en el catálogo")
-    print("2- ")
-
+    print("Bienvenido! :D")
+    print("1- Cargar información en el catálogo.")
+    print("2- Encontrar puntos de interconexión aérea.")
+    print("3- Encontrar clústeres de tráfico aéreo.")
+    print("4- Encontrar la ruta más corta entre ciudades.")
+    print("5- Utilizar las millas de viajero.")
+    print("6- Cuantificar el efecto de un aeropuerto cerrado.")
+    print("7- Comparar con servicio WEB externo.")
+    print("0- Salir")
 catalog = None
 
 """
@@ -51,7 +57,39 @@ while True:
         print("Cargando información de los archivos ....")
 
     elif int(inputs[0]) == 2:
-        pass
+        rta = controller.req1()
+        
+
+    elif int(inputs[0]) == 3:
+        Cod1 = input("Digite el código IATA del aeropuerto 1: ")
+        Cod2 = input("Digite el código IATA del aeropuerto 2: ")
+        rta = controller.req2(Cod1,Cod2)
+        
+
+    elif int(inputs[0]) == 4:
+        ciudadOrigen=input("Inserte el nombre de la ciudad de origen: ")
+        ciudadDestino=input("Inserte el nombre de la ciudad de destino: ")
+        rta=controller.req3(ciudadOrigen,ciudadDestino)
+        print(rta)
+        
+
+    elif int(inputs[0]) == 5:
+        ciudadOrigen=input("Inserte el nombre de la ciudad de origen: ")
+        cantidadMillas=input("Inserte la cantidad de millas disponibles: ")
+        rta=controller.req4(ciudadOrigen,cantidadMillas)
+        print(rta)
+        
+
+    elif int(inputs[0]) == 6:
+        codigoIATA=input("Ingrese el codigo IATA del aeropuerto de funcionamiento: ")
+        rta=controller.req5(codigoIATA)
+        print(rta)
+        
+
+    elif int(inputs[0]) == 7:
+        ciudadOrigen=input("Inserte el nombre de la ciudad de origen: ")
+        ciudadDestino=input("Inserte el nombre de la ciudad de destino: ")
+        rta = controller.bono(ciudadOrigen,ciudadDestino)
 
     else:
         sys.exit(0)
