@@ -23,14 +23,18 @@
  *
  * Dario Correal - Version inicial
  """
-
-import folium
-import config as cf
+import folium as f
+from datetime import datetime
+from App.controller import load
+from DISClib.DataStructures.arraylist import compareElements
+import config
+from DISClib.ADT.graph import gr
+from DISClib.ADT import map as m
 from DISClib.ADT import list as lt
-from DISClib.ADT import map as mp
-from DISClib.DataStructures import mapentry as me
-from DISClib.Algorithms.Sorting import shellsort as sa
-assert cf
+from DISClib.Algorithms.Graphs import scc
+from DISClib.Algorithms.Graphs import dijsktra as djk
+from DISClib.Utils import error as error
+assert config
 
 """
 Se define la estructura de un catálogo de videos. El catálogo tendrá dos listas, una para los videos, otra para las categorias de
@@ -38,13 +42,73 @@ los mismos.
 """
 
 # Construccion de modelos
+#Meta: 180 o menos, máximo y siendo amable, 200
+def newAnalyzer():
+    analyzer = {
+        'CompleteAirports':gr.newGraph(datastructure='ADJ_LIST',directed=True,size=14000, comparefunction=compareDistances),
+        'FullRoutes':gr.newGraph(datastructure='ADJ_LIST',directed=False, size = 14000, comparefunction=compareDistances),
+        'CitiesRoutes':gr.newGraph(datastructure='ADJ_LIST',directed=True, size = 14000, comparefunction=compareDistances),
+        'cities':m.newMap(numelements=200,maptype='CHAINING',loadfactor=0.7),
+        'airports':m.newMap(numelements=800,maptype='CHAINING',loadfactor=0.7)
+    }
+    return analyzer
 
-# Funciones para agregar informacion al catalogo
-
-# Funciones para creacion de datos
-
-# Funciones de consulta
 
 # Funciones utilizadas para comparar elementos dentro de una lista
+def compareDistances(value,keyairport):
+    airport = keyairport['key']
+    if airport==value:
+        return 0
+    elif airport>value:
+        return 1
+    else: return -1
+
+    
+def addVertex(analyzer,airportId,graphName):
+    try:
+        if not gr.containsVertex(analyzer[graphName],airportId):
+            gr.insertVertex(analyzer[graphName],airportId)
+            return analyzer
+    except Exception as exp:
+        error.reraise(exp,'model:addVertex')
+
+def addConnection(analyzer, origin, destination, distance,graphName):
+    """
+    Adiciona un arco entre dos estaciones
+    """
+    edge = gr.getEdge(analyzer[graphName], origin, destination)
+    if edge is None:
+        gr.addEdge(analyzer[graphName], origin, destination, distance)
+    return analyzer
+
+def addCity(analyzer,city):
+    mapcity = analyzer['cities']
+    cityName = city['city_ascii']   
+    m.put(mapcity,cityName,city)
+
+def addAirport(analyzer,airport):
+    mapAirports = analyzer['airports']
+    airportCode = airport['IATA']
+    m.put(mapAirports,airportCode,airport)
+
+
+def addData(route,analyzer):
+    city_departure = m.get(analyzer['airports'],route['Departure'])['key']
+    city_destination = m.get(analyzer['airports'],route['Destination'])['key']
+
+
+    addVertex(analyzer,city_departure,'CitiesRoutes')
+    addVertex(analyzer,city_destination,'CitiesRoutes')
+
+    addVertex(analyzer,route['Departure'],'CompleteAirports')
+    addVertex(analyzer,route['Destination'],'CompleteAirports')
+
+    addVertex(analyzer,route['Departure'],'FullRoutes')
+    addVertex(analyzer,route['Destination'],'FullRoutes')
+
+    addConnection(analyzer,city_destination,city_departure,0,'CitiesRoutes')
+    addConnection(analyzer,route['Departure'],route['Destination'],route['distance_km'],'CompleteAirports')
+    addConnection(analyzer,route['Departure'],route['Destination'],route['distance_km'],'FullRoutes')
+
 
 # Funciones de ordenamiento

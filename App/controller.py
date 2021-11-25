@@ -23,7 +23,8 @@
 import config as cf
 import model
 import csv
-
+import DISClib.DataStructures.graphstructure as gr
+import DISClib.DataStructures.mapstructure as mp
 """
 El controlador se encarga de mediar entre la vista y el modelo.
 """
@@ -35,9 +36,34 @@ El controlador se encarga de mediar entre la vista y el modelo.
 # Funciones de ordenamiento
 
 # Funciones de consulta sobre el catálogo
+def init():
+    analyzer = model.newAnalyzer()
+    return analyzer
+    
 
+def load(analyzer,file):
+    
+    file = cf.data_dir+file
+    input_file = csv.DictReader(open(file,encoding='utf-8'),delimiter=',')
+
+    city_file = cf.data_dir+'worldcities.csv'
+    file_cities = csv.DictReader(open(city_file,encoding='utf-8'),delimiter=',')
+
+    airports_file = cf.data_dir+'airports_full.csv'
+    file_ariports = csv.DictReader(open(airports_file,encoding='utf-8'),delimiter=',')
+
+    for city in file_cities:
+        model.addCity(analyzer,city)
+    
+    for airport in file_ariports:
+        model.addAirport(analyzer,airport)
+
+    for route in input_file:
+        
+        model.addData(route,analyzer)
 
 def req1():
+
     pass
 
 
