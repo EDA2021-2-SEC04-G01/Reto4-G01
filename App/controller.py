@@ -59,7 +59,6 @@ def load(analyzer,file):
         model.addAirport(analyzer,airport)
 
     for route in input_file:
-        
         model.addData(route,analyzer)
 
 def req1():
@@ -67,9 +66,8 @@ def req1():
     pass
 
 
-def req2(Cod1,Cod2):
-    pass
-
+def req2(analyzer,Cod1,Cod2):
+    return model.clusters(analyzer,Cod1,Cod2)
 
 def req3(ciudadOrigen,ciudadDestino):
     pass

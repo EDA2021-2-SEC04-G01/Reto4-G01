@@ -29,6 +29,7 @@ assert cf
 from DISClib.DataStructures import graphstructure as gr
 import threading
 import model
+from DISClib.DataStructures import mapstructure as m
 
 
 """
@@ -66,33 +67,34 @@ def thread_cycle():
 
         elif int(inputs[0]) == 2:
             rta = controller.req1()
-            
+
 
         elif int(inputs[0]) == 3:
-            Cod1 = input("Digite el código IATA del aeropuerto 1: ")
-            Cod2 = input("Digite el código IATA del aeropuerto 2: ")
-            rta = controller.req2(Cod1,Cod2)
-            
+            Cod1    =   input("Digite el código IATA del aeropuerto 1: ")
+            Cod2    =   input("Digite el código IATA del aeropuerto 2: ")
+            rta     =   controller.req2(analyzer,Cod1,Cod2)
+            if rta:     print("Efectivamente mi querido watsom :3")
+            else:       print("No están en el mismo clúster")
 
         elif int(inputs[0]) == 4:
             ciudadOrigen=input("Inserte el nombre de la ciudad de origen: ")
             ciudadDestino=input("Inserte el nombre de la ciudad de destino: ")
             rta=controller.req3(ciudadOrigen,ciudadDestino)
             print(rta)
-            
+
 
         elif int(inputs[0]) == 5:
             ciudadOrigen=input("Inserte el nombre de la ciudad de origen: ")
             cantidadMillas=input("Inserte la cantidad de millas disponibles: ")
             rta=controller.req4(ciudadOrigen,cantidadMillas)
             print(rta)
-            
+
 
         elif int(inputs[0]) == 6:
             codigoIATA=input("Ingrese el codigo IATA del aeropuerto de funcionamiento: ")
             rta=controller.req5(codigoIATA)
             print(rta)
-            
+
 
         elif int(inputs[0]) == 7:
             ciudadOrigen=input("Inserte el nombre de la ciudad de origen: ")
@@ -100,14 +102,18 @@ def thread_cycle():
             rta = controller.bono(ciudadOrigen,ciudadDestino)
 
         elif int(inputs[0]) == 8:
-            print('dirigido: '+str(analyzer['FullRoutes']['edges']))
-            print('no dirigido: '+str(analyzer['CompleteAirports']['edges']))
+            print(analyzer['CitiesRoutes'])
+            # print(model.Requerimiento3(analyzer,'Krasnodar--45.0333--38.9833','Yerevan--40.1814--44.5144'))
+            # model.prueba(analyzer)
+            # print(gr.numEdges(analyzer['CitiesRoutes']))
+            
+
+
         else:
             sys.exit(0)
 
 if __name__ == "__main__":
     threading.stack_size(67108864)  # 64MB stack
-    sys.setrecursionlimit(2 ** 10)
+    sys.setrecursionlimit(2 ** 30)
     thread = threading.Thread(target=thread_cycle)
     thread.start()
-
