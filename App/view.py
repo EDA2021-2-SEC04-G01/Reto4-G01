@@ -102,8 +102,8 @@ def thread_cycle():
             rta = controller.bono(ciudadOrigen,ciudadDestino)
 
         elif int(inputs[0]) == 8:
-            print(analyzer['CitiesRoutes'])
-            # print(model.Requerimiento3(analyzer,'Krasnodar--45.0333--38.9833','Yerevan--40.1814--44.5144'))
+            # print(analyzer['CitiesRoutes'])
+            print(model.Requerimiento3(analyzer,'Krasnodar--45.0333--38.9833','Yerevan--40.1814--44.5144'))
             # model.prueba(analyzer)
             # print(gr.numEdges(analyzer['CitiesRoutes']))
             

@@ -136,10 +136,13 @@ def clusters(analyzer, IATA1,IATA2):
 
 #↓↓Aquí comienza el req3↓↓
 def Requerimiento3(analyzer,cityDep,cityDest):
-    simplegraph=djk.Dijkstra(analyzer['CitiesRoutes'],cityDep)
-    BellmanFord(simplegraph,cityDep)
-
-    return None
+    
+    smallgraph=djk.Dijkstra(analyzer['CitiesRoutes'],cityDep)
+    camino = djk.pathTo(smallgraph,cityDest)
+    return camino
+    # pathTo(analyzer['CitiesRoutes'],cityDest)
+    # return pathTo(analyzer['CitiesRoutes'],cityDest)
+    
 
 
 def addMissingStuff(analyzer,city_departure,ruta_departure):
