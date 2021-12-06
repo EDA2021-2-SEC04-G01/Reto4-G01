@@ -63,11 +63,11 @@ def thread_cycle():
         inputs = input('Seleccione una opción para continuar\n')
         if int(inputs[0]) == 1:
             print("Cargando información de los archivos ....")
-            controller.load(analyzer,'routes_medium.csv')
+            controller.load(analyzer,'routes-utf8-small.csv')
 
         elif int(inputs[0]) == 2:
-            rta = controller.req1()
-
+            rta = model.Requerimiento1(analyzer)
+            print(rta)
 
         elif int(inputs[0]) == 3:
             Cod1    =   input("Digite el código IATA del aeropuerto 1: ")
@@ -103,11 +103,10 @@ def thread_cycle():
 
         elif int(inputs[0]) == 8:
             # print(analyzer['CitiesRoutes'])
-            print(model.Requerimiento3(analyzer,'Krasnodar--45.0333--38.9833','Yerevan--40.1814--44.5144'))
+            # print(model.Requerimiento3(analyzer,'Krasnodar--45.0333--38.9833','Yerevan--40.1814--44.5144'))
             # model.prueba(analyzer)
             # print(gr.numEdges(analyzer['CitiesRoutes']))
-            
-
+            print(model.Requerimiento5(analyzer,'DXB'))
 
         else:
             sys.exit(0)

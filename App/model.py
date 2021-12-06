@@ -27,16 +27,20 @@ from sys import call_tracing
 import folium as f
 from datetime import datetime
 from App.controller import load
-from DISClib.Algorithms.Graphs.bellmanford import BellmanFord, hasPathTo, pathTo
+from DISClib.Algorithms.Graphs.bellmanford import BellmanFord, hasPathTo, initSearch, pathTo
+from DISClib.Algorithms.Graphs.bfs import BreadhtFisrtSearch, bfsVertex
+from DISClib.Algorithms.Graphs.dfo import dfsVertex
+from DISClib.Algorithms.Graphs.prim import PrimMST, edgesMST, prim
 from DISClib.DataStructures.arraylist import compareElements
 from DISClib.DataStructures.chaininghashtable import contains
 import config
-from DISClib.ADT.graph import gr
+from DISClib.ADT.graph import adjacentEdges, adjacents, getEdge, gr
 from DISClib.ADT import map as m
 from DISClib.ADT import list as lt
 from DISClib.Algorithms.Graphs import scc
 from DISClib.Algorithms.Graphs import dijsktra as djk
 from DISClib.Utils import error as error
+from DISClib.Algorithms.Sorting import shellsort as sa
 assert config
 import math as mt
 from math import inf
@@ -49,9 +53,9 @@ los mismos.
 #Meta: 180 o menos, máximo y siendo amable, 200
 def newAnalyzer():
     analyzer = {
-        'CompleteAirports':gr.newGraph(datastructure='ADJ_LIST',directed=True,size=14000, comparefunction=compareDistances),
-        'FullRoutes':gr.newGraph(datastructure='ADJ_LIST',directed=False, size = 14000, comparefunction=compareDistances),
-        'CitiesRoutes':gr.newGraph(datastructure='ADJ_LIST',directed=True, size = 14000, comparefunction=compareDistances),
+        'CompleteAirports':gr.newGraph(datastructure='ADJ_LIST',directed=True,size=5000, comparefunction=compareDistances),
+        'FullRoutes':gr.newGraph(datastructure='ADJ_LIST',directed=False, size = 5000, comparefunction=compareDistances),
+        'CitiesRoutes':gr.newGraph(datastructure='ADJ_LIST',directed=True, size = 5000, comparefunction=compareDistances),
         'cities':m.newMap(numelements=200,maptype='CHAINING',loadfactor=0.7),
         'airports':m.newMap(numelements=800,maptype='CHAINING',loadfactor=0.7),
         'citiesUser':m.newMap(numelements=500,maptype='CHAINING',loadfactor=0.7)
@@ -99,11 +103,13 @@ def addCity(analyzer,city):
     else:
         list_cities=lt.newList(datastructure='ARRAY_LIST',cmpfunction=None)
 
+    city['airports']=lt.newList(datastructure='ARRAY_LIST',cmpfunction=None)
     lt.addLast(list_cities,city)
     m.put(analyzer['citiesUser'],cityName,list_cities)
     
 
 def addAirport(analyzer,airport):
+
     mapAirports = analyzer['airports']
     airportCode = airport['IATA']
     m.put(mapAirports,airportCode,airport)
@@ -113,25 +119,61 @@ def addAirport(analyzer,airport):
 
     else:
         citiesList=lt.newList(datastructure='ARRAY_LIST',cmpfunction=None)
-        city = {'city_ascii':airport['City'],'lat':airport['Latitude'],'lng':airport['Longitude']}
+        city = {'city_ascii':airport['City'],'lat':airport['Latitude'],'lng':airport['Longitude'],'airports':lt.newList(datastructure='ARRAY_LIST',cmpfunction=None)}
         lt.addLast(citiesList,city)
         m.put(analyzer['citiesUser'],airport['City'],citiesList)
-        m.put(analyzer['cities'],airport['City'],city)
-
     dist_menor = inf
+    pos = 0
     for city in lt.iterator(citiesList):
         distancia = calc_distancia(airport,city)
         if distancia<dist_menor:
             actual_city = city
             dist_menor = distancia
+            pos_minor=pos
+        pos+=1
+
+    Newcity= lt.getElement(citiesList,pos_minor)
+    lt.addLast(Newcity['airports'],airport)
+
 
     key = actual_city['city_ascii']+str(actual_city['lat'])+str(actual_city['lng'])
     m.put(analyzer['cities'],key,actual_city)
     
+#↓↓Aquí comienza el req1
+def Requerimiento1(analyzer):
+    airportsMap = analyzer['airports']
+    vertices = gr.vertices(analyzer['CompleteAirports'])
+    listaVertices = lt.newList(datastructure='SINGLE_LINKED',cmpfunction=None)
+    for vertex in lt.iterator(vertices):
+        
+        airportInfo = m.get(airportsMap,vertex)['value']
+        entra = gr.indegree(analyzer['CompleteAirports'],vertex)
+        sale = gr.outdegree(analyzer['CompleteAirports'],vertex)
+        total = entra + sale
+        vertexAdd = {'entrada':entra,'salida':sale,'total':total}
+        airportInfo.update(vertexAdd)
 
+        lt.addLast(listaVertices, airportInfo)
+    sortbyEdges(listaVertices)
+    return listaVertices
+
+def compareEdges(lista1, lista2):
+    cant1 = lista1['total']
+    cant2 = lista2['total']
+    return cant1>cant2
+
+def sortbyEdges(lista):
+    sa.sort(lista,compareEdges)
+
+#↑↑Aquí termina el req1
+
+
+#↓↓Aquí comienza el req2
 def clusters(analyzer, IATA1,IATA2):
     a = scc.KosarajuSCC(analyzer['CompleteAirports'])
     return (scc.stronglyConnected(a,IATA1,IATA2))
+
+#↑↑Aquí termina el req2
 
 
 #↓↓Aquí comienza el req3↓↓
@@ -142,58 +184,25 @@ def Requerimiento3(analyzer,cityDep,cityDest):
     return camino
     # pathTo(analyzer['CitiesRoutes'],cityDest)
     # return pathTo(analyzer['CitiesRoutes'],cityDest)
-    
+
+##Aquí comienza el req4
+def Requerimiento4(analyzer,distancia,origin):
+    distancia *= 1.6
+    searchStructure = PrimMST(analyzer['FullRoutes'])
+    return  prim(analyzer['CompleteAirports'],searchStructure,origin)
+
+def Requerimiento5(analyzer,IATA):
+    grafo = analyzer['CompleteAirports']
+    listReturn = lt.newList('SINGLE_LINKED',cmpfunction=None)
 
 
-def addMissingStuff(analyzer,city_departure,ruta_departure):
-###↓↓Esto es para añadir ciudades con recorridos↓↓
-    if m.contains(analyzer['citiesUser'],city_departure):
-        citiesList =m.get(analyzer['citiesUser'],city_departure)['value']
-
-    else:
-        citiesList=lt.newList(datastructure='ARRAY_LIST',cmpfunction=None)
-        city = {'city_ascii':ruta_departure['City'],'lat':ruta_departure['Latitude'],'lng':ruta_departure['Longitude']}
-        lt.addLast(citiesList,city)
-        m.put(analyzer['citiesUser'],ruta_departure['City'],citiesList)
-        key = city['city_ascii']+'--'+str(city['lat'])+'--'+str(city['lng'])
-        m.put(analyzer['cities'],key,city)
-
-    dist_menor = inf
-    for city in lt.iterator(citiesList):
-        distancia = calc_distancia(ruta_departure,city)
-        if distancia<dist_menor:
-            actual_city = city
-            dist_menor = distancia
-
-    key = actual_city['city_ascii']+'--'+str(actual_city['lat'])+'--'+str(actual_city['lng'])
-    m.put(analyzer['cities'],key,actual_city)
-    return (key,actual_city)
+    for edge in lt.iterator(gr.edges(grafo)):
+        if edge['vertexB']== IATA:
+            lt.addLast(listReturn,edge['vertexA'])
+    print(lt.size(listReturn))
+    return listReturn
 
 def addData(route,analyzer):
-
-    ruta_departure = m.get(analyzer['airports'],route['Departure'])['value']
-    city_destination = m.get(analyzer['airports'],route['Destination'])['value']['City']
-    city_departure = m.get(analyzer['airports'],route['Departure'])['value']['City']
-    ruta_destination = m.get(analyzer['airports'],route['Destination'])['value']
-    
-
-###↑↑Termina lo de arriba ↑↑
-
-    city_departure=addMissingStuff(analyzer,city_departure,ruta_departure)
-
-    city_destination=addMissingStuff(analyzer,city_destination,ruta_destination)
-
-    cityDep = city_departure[1]
-    cityDest = city_destination[1]
-
-    city_departure=city_departure[0]
-
-    city_destination=city_destination[0]
-
-    distcities=dist_cities(cityDep,cityDest)
-
-    addVertex(analyzer,city_departure,'CitiesRoutes')
-    addVertex(analyzer,city_destination,'CitiesRoutes')
 
     addVertex(analyzer,route['Departure'],'CompleteAirports')
     addVertex(analyzer,route['Destination'],'CompleteAirports')
@@ -201,7 +210,6 @@ def addData(route,analyzer):
     addVertex(analyzer,route['Departure'],'FullRoutes')
     addVertex(analyzer,route['Destination'],'FullRoutes')
 
-    addConnection(analyzer,city_destination,city_departure,distcities,'CitiesRoutes')
     addConnection(analyzer,route['Departure'],route['Destination'],float(route['distance_km']),'CompleteAirports')
     addConnection(analyzer,route['Departure'],route['Destination'],float(route['distance_km']),'FullRoutes')
 
