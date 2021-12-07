@@ -29,12 +29,15 @@ from datetime import datetime
 from App.controller import load
 from DISClib.Algorithms.Graphs.bellmanford import BellmanFord, hasPathTo, initSearch, pathTo
 from DISClib.Algorithms.Graphs.bfs import BreadhtFisrtSearch, bfsVertex
-from DISClib.Algorithms.Graphs.dfo import dfsVertex
-from DISClib.Algorithms.Graphs.prim import PrimMST, edgesMST, prim
+from DISClib.Algorithms.Graphs.cycles import dfs
+from DISClib.Algorithms.Graphs.dfo import DepthFirstOrder, dfsVertex
+from DISClib.Algorithms.Graphs.dfs import DepthFirstSearch
+from DISClib.Algorithms.Graphs.dfs import pathTo as dfsPathTo
+from DISClib.Algorithms.Graphs.prim import PrimMST, edgesMST, prim, scan
 from DISClib.DataStructures.arraylist import compareElements
 from DISClib.DataStructures.chaininghashtable import contains
 import config
-from DISClib.ADT.graph import adjacentEdges, adjacents, getEdge, gr
+from DISClib.ADT.graph import adjacentEdges, adjacents, getEdge, gr, vertices
 from DISClib.ADT import map as m
 from DISClib.ADT import list as lt
 from DISClib.Algorithms.Graphs import scc
@@ -106,7 +109,7 @@ def addCity(analyzer,city):
     city['airports']=lt.newList(datastructure='ARRAY_LIST',cmpfunction=None)
     lt.addLast(list_cities,city)
     m.put(analyzer['citiesUser'],cityName,list_cities)
-    
+
 
 def addAirport(analyzer,airport):
 
@@ -134,7 +137,9 @@ def addAirport(analyzer,airport):
 
     Newcity= lt.getElement(citiesList,pos_minor)
     lt.addLast(Newcity['airports'],airport)
-
+    lt.deleteElement(citiesList,pos_minor)
+    lt.addLast(citiesList,Newcity)
+    
 
     key = actual_city['city_ascii']+str(actual_city['lat'])+str(actual_city['lng'])
     m.put(analyzer['cities'],key,actual_city)
@@ -178,18 +183,63 @@ def clusters(analyzer, IATA1,IATA2):
 
 #↓↓Aquí comienza el req3↓↓
 def Requerimiento3(analyzer,cityDep,cityDest):
-    
-    smallgraph=djk.Dijkstra(analyzer['CitiesRoutes'],cityDep)
-    camino = djk.pathTo(smallgraph,cityDest)
-    return camino
+
+
+    pass
+    # smallgraph=djk.Dijkstra(analyzer['CitiesRoutes'],cityDep)
+    # camino = djk.pathTo(smallgraph,cityDest)
+    # for i in camino:
+    #     print(i)
+    # return camino
     # pathTo(analyzer['CitiesRoutes'],cityDest)
     # return pathTo(analyzer['CitiesRoutes'],cityDest)
+
+def selectAirport(analyzer, city):
+    print(m.get(analyzer['citiesUser'],city)['value'])
+    
 
 ##Aquí comienza el req4
 def Requerimiento4(analyzer,distancia,origin):
     distancia *= 1.6
-    searchStructure = PrimMST(analyzer['FullRoutes'])
-    return  prim(analyzer['CompleteAirports'],searchStructure,origin)
+    searchStructure = PrimMST(analyzer['CompleteAirports'])
+    # print(searchStructure)
+    hola = (prim(analyzer['CompleteAirports'],searchStructure,origin))
+    # DepthFirstOrder(searchStructure)
+    # dfsVertex(analyzer,searchStructure,origin)
+    # path = edgesMST(analyzer['CompleteAirports'],hola)
+    # print(gr.newGraph(datastructure='ADJ_LIST',directed=True,size=2,comparefunction=None))
+    # cosa = DepthFirstSearch(searchStructure,origin)
+    for i in lt.iterator(gr.vertices(analyzer['CompleteAirports'])):
+        if scan(analyzer['CompleteAirports'],searchStructure,i)['edgeTo']['size']!=0:
+            print(scan(analyzer['CompleteAirports'],searchStructure,i)['weight'])
+    # print(searchStructure)
+    # for i in lt.iterator(gr.vertices(analyzer['CompleteAirports'])):   
+    #     print(dfsPathTo(cosa,i))
+    # total=0
+    # cantidad = 0
+    # for i in lt.iterator(hola):
+    #     if i['key']!=None:
+    #         if float(i['value']['weight'])+total<=distancia:
+    #             total+=float(i['value']['weight'])
+    #             cantidad+=1
+
+    # print(total)
+    # print(cantidad)
+    # print(m.size(hola))
+    # return hola
+    # vertexMax=None
+    # pesoMax=0
+    # for vertex in lt.iterator(gr.vertices(analyzer['CompleteAirports'])):
+    #     peso=0
+    #     hola = (prim(analyzer['CompleteAirports'],searchStructure,vertex)['edgeTo']['table'])
+    #     for i in lt.iterator(hola):
+    #         if i['key']!=None:
+    #             peso+=i['value']['weight']
+    #     if peso>pesoMax:
+    #         pesoMax=peso
+    #         vertexMax=vertex
+    # print(vertexMax)
+
 
 def Requerimiento5(analyzer,IATA):
     grafo = analyzer['CompleteAirports']

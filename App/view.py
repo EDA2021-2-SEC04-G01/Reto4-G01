@@ -30,6 +30,7 @@ from DISClib.DataStructures import graphstructure as gr
 import threading
 import model
 from DISClib.DataStructures import mapstructure as m
+from tabless
 
 
 """
@@ -66,8 +67,14 @@ def thread_cycle():
             controller.load(analyzer,'routes-utf8-small.csv')
 
         elif int(inputs[0]) == 2:
+            print('========== Req No. 1 Inputs ========== \n')
+            print('Most connected airports in network (TOP 5)')
+            print('Number of airports in network: '+ str(lt.size(analyzer['CompleteAirports']))+'\n')
             rta = model.Requerimiento1(analyzer)
-            print(rta)
+            print('========== Req No. 1 Answer ========== \n')
+            print('Connected airports inside network>=: '+str(lt.size(rta)))
+            print('Top 5 most connected airports... \n')
+            print(tabless.))
 
         elif int(inputs[0]) == 3:
             Cod1    =   input("Digite el código IATA del aeropuerto 1: ")
@@ -77,9 +84,11 @@ def thread_cycle():
             else:       print("No están en el mismo clúster")
 
         elif int(inputs[0]) == 4:
-            ciudadOrigen=input("Inserte el nombre de la ciudad de origen: ")
-            ciudadDestino=input("Inserte el nombre de la ciudad de destino: ")
-            rta=controller.req3(ciudadOrigen,ciudadDestino)
+            ciudadOrigen=input("Inserte el nombre de la ciudad de origen: ").strip()
+            ciudadDestino=input("Inserte el nombre de la ciudad de destino: ").strip()
+            model.selectAirport(analyzer,ciudadOrigen)
+            model.selectAirport(analyzer,ciudadDestino)
+            rta=model.Requerimiento3(analyzer,ciudadOrigen,ciudadDestino)
             print(rta)
 
 
@@ -106,7 +115,8 @@ def thread_cycle():
             # print(model.Requerimiento3(analyzer,'Krasnodar--45.0333--38.9833','Yerevan--40.1814--44.5144'))
             # model.prueba(analyzer)
             # print(gr.numEdges(analyzer['CitiesRoutes']))
-            print(model.Requerimiento5(analyzer,'DXB'))
+            # print(model.Requerimiento5(analyzer,'DXB'))
+            print(model.Requerimiento4(analyzer,1890,'LIS'))
 
         else:
             sys.exit(0)
