@@ -30,7 +30,7 @@ from DISClib.DataStructures import graphstructure as gr
 import threading
 import model
 from DISClib.DataStructures import mapstructure as m
-from tabless
+import tabless
 
 
 """
@@ -64,7 +64,7 @@ def thread_cycle():
         inputs = input('Seleccione una opción para continuar\n')
         if int(inputs[0]) == 1:
             print("Cargando información de los archivos ....")
-            controller.load(analyzer,'routes-utf8-small.csv')
+            controller.load(analyzer,'routes-utf8-large.csv')
 
         elif int(inputs[0]) == 2:
             print('========== Req No. 1 Inputs ========== \n')
@@ -74,7 +74,7 @@ def thread_cycle():
             print('========== Req No. 1 Answer ========== \n')
             print('Connected airports inside network>=: '+str(lt.size(rta)))
             print('Top 5 most connected airports... \n')
-            print(tabless.))
+            print(tabless)
 
         elif int(inputs[0]) == 3:
             Cod1    =   input("Digite el código IATA del aeropuerto 1: ")
@@ -84,18 +84,39 @@ def thread_cycle():
             else:       print("No están en el mismo clúster")
 
         elif int(inputs[0]) == 4:
+
             ciudadOrigen=input("Inserte el nombre de la ciudad de origen: ").strip()
+            list_cities = model.selectCity(analyzer,ciudadOrigen)
+            pos = int(input("Seleccione a la ciudad específica: "))
+            infOrigin = model.infoCity(list_cities,pos)
+            list_airports = model.showAirports(list_cities,pos)
+            pos = int(input("Seleccione el aeropuerto de salida: "))
+            aerSalida = model.selectAirport(list_airports,pos)
+            
+
             ciudadDestino=input("Inserte el nombre de la ciudad de destino: ").strip()
-            model.selectAirport(analyzer,ciudadOrigen)
-            model.selectAirport(analyzer,ciudadDestino)
-            rta=model.Requerimiento3(analyzer,ciudadOrigen,ciudadDestino)
-            print(rta)
+            list_cities = model.selectCity(analyzer,ciudadDestino)
+            pos = int(input("Seleccione a la ciudad específica: "))
+            infDest = model.infoCity(list_cities,pos)
+            list_airports = model.showAirports(list_cities,pos)
+            pos = int(input("Seleccione el aeropuerto de destino: "))
+            aerDestino = model.selectAirport(list_airports,pos)
+
+            print("vamos de {} para {}".format(aerSalida,aerDestino))
+
+            rta=model.Requerimiento3(analyzer,aerSalida,aerDestino,infOrigin,infDest)
+
+            print("Distancia total de viaje: "+rta)
 
 
         elif int(inputs[0]) == 5:
             ciudadOrigen=input("Inserte el nombre de la ciudad de origen: ")
-            cantidadMillas=input("Inserte la cantidad de millas disponibles: ")
-            rta=controller.req4(ciudadOrigen,cantidadMillas)
+            list_cities = model.selectCity(analyzer,ciudadOrigen)
+            pos = int(input("Seleccione a la ciudad específica: "))
+            ciudadOrigen = model.infoCity(list_cities,pos)
+
+            cantidadMillas=float(input("Inserte la cantidad de millas disponibles: "))
+            rta=controller.req4(analyzer,cantidadMillas,ciudadOrigen)
             print(rta)
 
 

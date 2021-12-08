@@ -23,7 +23,7 @@
  *
  * Dario Correal - Version inicial
  """
-from sys import call_tracing
+from sys import call_tracing, maxsize
 import folium as f
 from datetime import datetime
 from App.controller import load
@@ -36,12 +36,14 @@ from DISClib.Algorithms.Graphs.dfs import pathTo as dfsPathTo
 from DISClib.Algorithms.Graphs.prim import PrimMST, edgesMST, prim, scan
 from DISClib.DataStructures.arraylist import compareElements
 from DISClib.DataStructures.chaininghashtable import contains
+from DISClib.DataStructures.edge import weight
 import config
 from DISClib.ADT.graph import adjacentEdges, adjacents, getEdge, gr, vertices
 from DISClib.ADT import map as m
 from DISClib.ADT import list as lt
 from DISClib.Algorithms.Graphs import scc
 from DISClib.Algorithms.Graphs import dijsktra as djk
+
 from DISClib.Utils import error as error
 from DISClib.Algorithms.Sorting import shellsort as sa
 assert config
@@ -58,8 +60,6 @@ def newAnalyzer():
     analyzer = {
         'CompleteAirports':gr.newGraph(datastructure='ADJ_LIST',directed=True,size=5000, comparefunction=compareDistances),
         'FullRoutes':gr.newGraph(datastructure='ADJ_LIST',directed=False, size = 5000, comparefunction=compareDistances),
-        'CitiesRoutes':gr.newGraph(datastructure='ADJ_LIST',directed=True, size = 5000, comparefunction=compareDistances),
-        'cities':m.newMap(numelements=200,maptype='CHAINING',loadfactor=0.7),
         'airports':m.newMap(numelements=800,maptype='CHAINING',loadfactor=0.7),
         'citiesUser':m.newMap(numelements=500,maptype='CHAINING',loadfactor=0.7)
     }
@@ -75,7 +75,14 @@ def compareDistances(value,keyairport):
         return 1
     else: return -1
 
-    
+def cmpAirportdistance(airport1,airport2):
+    return airport1['distanceToCity']>airport2['distanceToCity']
+
+def sortAirports(listAirports):
+    return sa.sort(listAirports,cmpAirportdistance)
+
+#Carga de data
+#++--------------------------------------------------------------------------------------------------------------------------++
 def addVertex(analyzer,airportId,graphName):
     try:
         if not gr.containsVertex(analyzer[graphName],airportId):
@@ -95,11 +102,7 @@ def addConnection(analyzer, origin, destination, distance,graphName):
 
 def addCity(analyzer,city):
 
-    mapcity = analyzer['cities']
     cityName = city['city_ascii']   
-
-    lat = city['lat']
-    infoCity = cityName+str(city['lat'])+str(city['lng'])
 
     if m.contains(analyzer['citiesUser'],cityName):
         list_cities = m.get(analyzer['citiesUser'],cityName)['value']
@@ -109,7 +112,7 @@ def addCity(analyzer,city):
     city['airports']=lt.newList(datastructure='ARRAY_LIST',cmpfunction=None)
     lt.addLast(list_cities,city)
     m.put(analyzer['citiesUser'],cityName,list_cities)
-
+    
 
 def addAirport(analyzer,airport):
 
@@ -135,15 +138,24 @@ def addAirport(analyzer,airport):
             pos_minor=pos
         pos+=1
 
+    airport['distanceToCity']=calc_distancia(airport,actual_city)
     Newcity= lt.getElement(citiesList,pos_minor)
     lt.addLast(Newcity['airports'],airport)
-    lt.deleteElement(citiesList,pos_minor)
-    lt.addLast(citiesList,Newcity)
-    
+    sortAirports(Newcity['airports'])
 
-    key = actual_city['city_ascii']+str(actual_city['lat'])+str(actual_city['lng'])
-    m.put(analyzer['cities'],key,actual_city)
-    
+def addData(route,analyzer):
+
+    addVertex(analyzer,route['Departure'],'CompleteAirports')
+    addVertex(analyzer,route['Destination'],'CompleteAirports')
+
+    addVertex(analyzer,route['Departure'],'FullRoutes')
+    addVertex(analyzer,route['Destination'],'FullRoutes')
+
+    addConnection(analyzer,route['Departure'],route['Destination'],float(route['distance_km']),'CompleteAirports')
+    addConnection(analyzer,route['Departure'],route['Destination'],float(route['distance_km']),'FullRoutes')
+
+#++--------------------------------------------------------------------------------------------------------------------------++
+
 #↓↓Aquí comienza el req1
 def Requerimiento1(analyzer):
     airportsMap = analyzer['airports']
@@ -180,71 +192,103 @@ def clusters(analyzer, IATA1,IATA2):
 
 #↑↑Aquí termina el req2
 
+#++--------------------------------------------------------------------------------------------------------------------------++
 
 #↓↓Aquí comienza el req3↓↓
-def Requerimiento3(analyzer,cityDep,cityDest):
+def Requerimiento3(analyzer,origin,Destiny, infOrigin,infDest):
 
+    airportsMap = analyzer['airports']
 
-    pass
-    # smallgraph=djk.Dijkstra(analyzer['CitiesRoutes'],cityDep)
-    # camino = djk.pathTo(smallgraph,cityDest)
-    # for i in camino:
-    #     print(i)
-    # return camino
-    # pathTo(analyzer['CitiesRoutes'],cityDest)
-    # return pathTo(analyzer['CitiesRoutes'],cityDest)
+    OrgAirportInfo = m.get(airportsMap,origin)['value']
 
-def selectAirport(analyzer, city):
-    print(m.get(analyzer['citiesUser'],city)['value'])
+    DestArprtInfo = m.get(airportsMap,Destiny)['value']
+
+    dist_total=calc_distancia(OrgAirportInfo,infOrigin)+calc_distancia(DestArprtInfo,infDest)
+
+    smallgraph = djk.Dijkstra(analyzer['CompleteAirports'],origin)
+    camino = djk.pathTo(smallgraph,Destiny)
+
+    for paso in lt.iterator(camino):
+        print("{} a {}, Distancia: {}".format(paso['vertexA'],paso['vertexB'],round(paso['weight']),2))
+        dist_total+=paso['weight']
     
+    return str(round(dist_total,2))
+
+#Funciones auxiliares para el req3
+def selectCity(analyzer, city):
+    lista_cities = (m.get(analyzer['citiesUser'],city)['value'])
+    pos=0
+    for i in lt.iterator(lista_cities):
+
+        infoPrint = "Nombre: {}, País: {}, Departamento: {}, Latitud: {}, Longitud: {}, Cantidad de aeropuertos: {}".format(i['city_ascii'],i['country'],
+        i['admin_name'],i['lat'],i['lng'],lt.size(i['airports']))
+        print(str(pos+1)+'. ',infoPrint,'\n')
+        pos+=1
+    return lista_cities
+
+def showAirports(citiesList,posCity):
+    infoCity = lt.getElement(citiesList,posCity)
+    list_airports = infoCity['airports']
+    pos = 0
+
+    for i in lt.iterator(list_airports):
+        infoPrint = "id: {}, Nombre: {}, IATA: {}, Latitud: {},Longitud: {}, Distancia a la ciudad: {} km".format(i['id'], 
+        i['Name'],i['IATA'],i['Latitude'],i['Longitude'],round(calc_distancia(i, infoCity),2))
+        print(str(pos+1)+'. ',infoPrint,'\n')
+        pos+=1
+        
+    return list_airports
+
+def infoCity(list_cities,pos):
+    return lt.getElement(list_cities,pos)
+
+def selectAirport(list_airports,pos):
+    
+    return lt.getElement(list_airports,pos)['IATA']
+#Fin del req 3
+
+#++--------------------------------------------------------------------------------------------------------------------------++
+
 
 ##Aquí comienza el req4
 def Requerimiento4(analyzer,distancia,origin):
     distancia *= 1.6
-    searchStructure = PrimMST(analyzer['CompleteAirports'])
-    # print(searchStructure)
-    hola = (prim(analyzer['CompleteAirports'],searchStructure,origin))
-    # DepthFirstOrder(searchStructure)
-    # dfsVertex(analyzer,searchStructure,origin)
-    # path = edgesMST(analyzer['CompleteAirports'],hola)
-    # print(gr.newGraph(datastructure='ADJ_LIST',directed=True,size=2,comparefunction=None))
-    # cosa = DepthFirstSearch(searchStructure,origin)
-    for i in lt.iterator(gr.vertices(analyzer['CompleteAirports'])):
-        if scan(analyzer['CompleteAirports'],searchStructure,i)['edgeTo']['size']!=0:
-            print(scan(analyzer['CompleteAirports'],searchStructure,i)['weight'])
-    # print(searchStructure)
-    # for i in lt.iterator(gr.vertices(analyzer['CompleteAirports'])):   
-    #     print(dfsPathTo(cosa,i))
-    # total=0
-    # cantidad = 0
-    # for i in lt.iterator(hola):
-    #     if i['key']!=None:
-    #         if float(i['value']['weight'])+total<=distancia:
-    #             total+=float(i['value']['weight'])
-    #             cantidad+=1
+    list_airports = origin['airports']
+    airport = lt.firstElement(list_airports)
+    airportCode = airport['IATA']
+    searchStructure = djk.Dijkstra(analyzer['CompleteAirports'],airportCode)
+    mst = PrimMST(analyzer['CompleteAirports'])
 
-    # print(total)
-    # print(cantidad)
-    # print(m.size(hola))
-    # return hola
-    # vertexMax=None
-    # pesoMax=0
-    # for vertex in lt.iterator(gr.vertices(analyzer['CompleteAirports'])):
-    #     peso=0
-    #     hola = (prim(analyzer['CompleteAirports'],searchStructure,vertex)['edgeTo']['table'])
-    #     for i in lt.iterator(hola):
-    #         if i['key']!=None:
-    #             peso+=i['value']['weight']
-    #     if peso>pesoMax:
-    #         pesoMax=peso
-    #         vertexMax=vertex
-    # print(vertexMax)
+    maxRoute = None
+    maxSize = 0
+    totalWeight = 0
+    spentDistance = 0
 
+    for vertex in lt.iterator(gr.vertices(analyzer['CompleteAirports'])):
+
+        route = (djk.pathTo(searchStructure,vertex))
+        if route['size']>maxSize:
+            maxsize=route['size']
+            maxRoute=route
+    
+    for step in lt.iterator(maxRoute):
+        if distancia>0:
+            distancia-=step['weight']
+            spentDistance+=step['weight']
+
+        totalWeight +=step['weight']
+
+
+
+#++--------------------------------------------------------------------------------------------------------------------------++
 
 def Requerimiento5(analyzer,IATA):
     grafo = analyzer['CompleteAirports']
+    modifiedGraph = gr.removeVertex(grafo,IATA)
     listReturn = lt.newList('SINGLE_LINKED',cmpfunction=None)
 
+    before = (gr.numVertices(modifiedGraph),gr.numEdges(grafo))
+    after = (gr.numVertices(modifiedGraph),gr.numEdges(modifiedGraph))
 
     for edge in lt.iterator(gr.edges(grafo)):
         if edge['vertexB']== IATA:
@@ -252,16 +296,7 @@ def Requerimiento5(analyzer,IATA):
     print(lt.size(listReturn))
     return listReturn
 
-def addData(route,analyzer):
-
-    addVertex(analyzer,route['Departure'],'CompleteAirports')
-    addVertex(analyzer,route['Destination'],'CompleteAirports')
-
-    addVertex(analyzer,route['Departure'],'FullRoutes')
-    addVertex(analyzer,route['Destination'],'FullRoutes')
-
-    addConnection(analyzer,route['Departure'],route['Destination'],float(route['distance_km']),'CompleteAirports')
-    addConnection(analyzer,route['Departure'],route['Destination'],float(route['distance_km']),'FullRoutes')
+#++--------------------------------------------------------------------------------------------------------------------------++
 
 
 def calc_distancia(airport,city):
@@ -275,6 +310,7 @@ def calc_distancia(airport,city):
     c=2*mt.atan2(mt.sqrt(a),mt.sqrt(1-a))
     d= r*c
     return d
+
 def dist_cities(city1,city2):
     r=6371
     lat1=float(city1['lat'])
