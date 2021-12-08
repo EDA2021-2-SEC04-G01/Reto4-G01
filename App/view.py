@@ -69,12 +69,12 @@ def thread_cycle():
         elif int(inputs[0]) == 2:
             print('========== Req No. 1 Inputs ========== \n')
             print('Most connected airports in network (TOP 5)')
-            print('Number of airports in network: '+ str(lt.size(analyzer['CompleteAirports']))+'\n')
+            # print('Number of airports in network: '+ str(lt.size(analyzer['CompleteAirports']))+'\n')
             rta = model.Requerimiento1(analyzer)
             print('========== Req No. 1 Answer ========== \n')
-            print('Connected airports inside network>=: '+str(lt.size(rta)))
-            print('Top 5 most connected airports... \n')
-            print(tabless)
+            # print('Connected airports inside network>=: '+str(lt.size(rta)))
+            # print('Top 5 most connected airports... \n')
+            print(tabless.createTable(rta))
 
         elif int(inputs[0]) == 3:
             Cod1    =   input("Digite el código IATA del aeropuerto 1: ")
