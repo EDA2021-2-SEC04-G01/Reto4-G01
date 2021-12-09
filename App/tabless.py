@@ -1,4 +1,6 @@
+from App.controller import load
 from DISClib.ADT import list as lt
+from DISClib.ADT import map as m
 from tabulate import tabulate
 import textwrap
 from datetime import datetime as dt
@@ -51,5 +53,71 @@ def infoTable(airport):
     name = chkUnknown(airport,'Name')
     city = chkUnknown(airport,'City')
     country = chkUnknown(airport,'Country')
-    table = tabulate([code,name,city,country],headers=headers,numalign='right',tablefmt='grid')
+    table = tabulate([[code,name,city,country]],headers=headers,numalign='right',tablefmt='grid')
     return table
+
+def tripTable(route):
+    headers = ['Departure','Destination','Distance_km']
+    info = []
+    for step in lt.iterator(route):
+        dep = chkUnknown(step,'vertexA')
+        dest = chkUnknown(step,'vertexB')
+        distance = chkUnknown(step,'weight')
+        info.append([dep,dest,distance])
+    table = tabulate(info,headers=headers, numalign='right',tablefmt='grid')
+    return table
+
+def tableStops(route,analyzer):
+    headers = ['IATA','Name','City','Country']
+    airports = analyzer['airports']
+    inserted = m.newMap(numelements=5,maptype='CHAINING',loadfactor=0.7)
+    infoTable=[]
+    for step in lt.iterator(route):
+        if not m.contains(inserted, step['vertexA']):
+                airport = m.get(airports,step['vertexA'])['value']
+                code = chkUnknown(airport,'IATA')
+                name = chkUnknown(airport,'Name')
+                city = chkUnknown(airport,'City')
+                country = chkUnknown(airport,'Country')
+                infoTable.append([code,name,city,country])
+                m.put(inserted,step['vertexA'], None)
+
+        if not m.contains(inserted, step['vertexB']):
+                airport = m.get(airports,step['vertexB'])['value']
+                code = chkUnknown(airport,'IATA')
+                name = chkUnknown(airport,'Name')
+                city = chkUnknown(airport,'City')
+                country = chkUnknown(airport,'Country')
+                infoTable.append([code,name,city,country])
+                m.put(inserted,step['vertexB'], None)
+    
+    table = tabulate(infoTable,headers=headers, tablefmt='grid',numalign='right')
+    return table
+
+def FirstLast3Table(listAirports,analyzer):
+    headers = ['IATA','Name','City','Country']
+    infoTable = []
+
+    if lt.size(listAirports)>6:
+        for pos in range(1,4):
+            infoTable.append(getInfo(pos,listAirports,analyzer))  
+
+        for pos in range(lt.size(listAirports)-2,lt.size(listAirports)+1):
+            infoTable.append(getInfo(pos,listAirports,analyzer))  
+    else:
+        for pos in range(1,lt.size(listAirports)+1):
+            infoTable.append(getInfo(pos,listAirports,analyzer))
+
+    table = tabulate(infoTable,headers=headers, tablefmt='grid',numalign='right')
+
+    return table
+
+def getInfo(pos,listAirports,analyzer):
+    airport = lt.getElement(listAirports,pos)
+    airports = analyzer['airports']
+    airport = m.get(airports,airport)['value']
+    code = chkUnknown(airport,'IATA')
+    name = chkUnknown(airport,'Name')
+    city = chkUnknown(airport,'City')
+    country = chkUnknown(airport,'Country')
+    return [code,name,city,country]

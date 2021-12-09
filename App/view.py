@@ -64,24 +64,32 @@ def thread_cycle():
         inputs = input('Seleccione una opción para continuar\n')
         if int(inputs[0]) == 1:
             print("Cargando información de los archivos ....")
-            controller.load(analyzer,'routes-utf8-large.csv')
+            controller.load(analyzer,'routes-utf8-small.csv')
+            print(gr.numVertices(analyzer['CompleteAirports']))
 
         elif int(inputs[0]) == 2:
             print('========== Req No. 1 Inputs ========== \n')
             print('Most connected airports in network (TOP 5)')
-            # print('Number of airports in network: '+ str(lt.size(analyzer['CompleteAirports']))+'\n')
+            print('Number of airports in network: '+ str(gr.numVertices(analyzer['CompleteAirports']))+'\n')
             rta = model.Requerimiento1(analyzer)
             print('========== Req No. 1 Answer ========== \n')
-            # print('Connected airports inside network>=: '+str(lt.size(rta)))
-            # print('Top 5 most connected airports... \n')
+            print('Connected airports inside network: '+str(lt.size(rta)))
+            print('Top 5 most connected airports... \n')
             print(tabless.createTable(rta))
 
         elif int(inputs[0]) == 3:
             Cod1    =   input("Digite el código IATA del aeropuerto 1: ")
             Cod2    =   input("Digite el código IATA del aeropuerto 2: ")
+            print('========== Req No. 2 Inputs ========== \n')
+            print('Airport-1 IATA Code: ' + Cod1)
+            print('Airport-2 IATA Code: ' + Cod2 +'\n')
             rta     =   controller.req2(analyzer,Cod1,Cod2)
-            if rta:     print("Efectivamente mi querido watsom :3")
-            else:       print("No están en el mismo clúster")
+            print('========== Req No. 2 Answer ========== \n')
+            print('+++ Airport1 IATA Code: '+ Cod1+ ' +++')
+            print(tabless.infoTable(rta[1]))
+            print('+++ Airport2 IATA Code: '+ Cod2+ ' +++')
+            print(tabless.infoTable(rta[2]))
+            
 
         elif int(inputs[0]) == 4:
 
@@ -103,10 +111,17 @@ def thread_cycle():
             aerDestino = model.selectAirport(list_airports,pos)
 
             print("vamos de {} para {}".format(aerSalida,aerDestino))
+            print( "+++ The departure airport in St. Petersburg is: ")
+            print(tabless.infoTable(rta[0]))
+            print("The arrival airport in Lisbon is: ")
+            print(tabless.infoTable(rta[1]))
 
             rta=model.Requerimiento3(analyzer,aerSalida,aerDestino,infOrigin,infDest)
+            print(tabless.tripTable(rta[2]))
+            print("\nTrip stops")
+            print(tabless.tableStops(rta[2],analyzer))
 
-            print("Distancia total de viaje: "+rta)
+            print("Distancia total de viaje: "+str(rta[3]))
 
 
         elif int(inputs[0]) == 5:
@@ -114,16 +129,21 @@ def thread_cycle():
             list_cities = model.selectCity(analyzer,ciudadOrigen)
             pos = int(input("Seleccione a la ciudad específica: "))
             ciudadOrigen = model.infoCity(list_cities,pos)
-
             cantidadMillas=float(input("Inserte la cantidad de millas disponibles: "))
+
             rta=controller.req4(analyzer,cantidadMillas,ciudadOrigen)
-            print(rta)
+
+            print(tabless.infoTable(rta[1]))
+            print(tabless.tripTable(rta[0]))
+            
+            # print(rta)
 
 
         elif int(inputs[0]) == 6:
             codigoIATA=input("Ingrese el codigo IATA del aeropuerto de funcionamiento: ")
-            rta=controller.req5(codigoIATA)
-            print(rta)
+            
+            rta=controller.req5(analyzer,codigoIATA)
+            print(tabless.FirstLast3Table(rta,analyzer))
 
 
         elif int(inputs[0]) == 7:

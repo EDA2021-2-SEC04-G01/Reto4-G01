@@ -94,7 +94,7 @@ def insertVertex(graph, vertex):
         error.reraise(exp, 'ajlist:insertvertex')
 
 
-def removeVertex(graph, vertex):
+def  removeVertex(graph, vertex):
     """
     Remueve el vertice vertex del grafo graph
 

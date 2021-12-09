@@ -24,6 +24,7 @@
  * Dario Correal - Version inicial
  """
 from sys import call_tracing, maxsize
+from typing import List
 import folium as f
 from datetime import datetime
 from App.controller import load
@@ -38,9 +39,10 @@ from DISClib.DataStructures.arraylist import compareElements
 from DISClib.DataStructures.chaininghashtable import contains
 from DISClib.DataStructures.edge import weight
 import config
-from DISClib.ADT.graph import adjacentEdges, adjacents, getEdge, gr, vertices
+from DISClib.ADT.graph import adjacentEdges, adjacents, getEdge, gr, numEdges, vertices
 from DISClib.ADT import map as m
 from DISClib.ADT import list as lt
+from DISClib.ADT import stack 
 from DISClib.Algorithms.Graphs import scc
 from DISClib.Algorithms.Graphs import dijsktra as djk
 
@@ -49,6 +51,7 @@ from DISClib.Algorithms.Sorting import shellsort as sa
 assert config
 import math as mt
 from math import inf
+from haversine import haversine
 """
 Se define la estructura de un catálogo de videos. El catálogo tendrá dos listas, una para los videos, otra para las categorias de
 los mismos.
@@ -76,7 +79,7 @@ def compareDistances(value,keyairport):
     else: return -1
 
 def cmpAirportdistance(airport1,airport2):
-    return airport1['distanceToCity']>airport2['distanceToCity']
+    return airport1['distanceToCity']<airport2['distanceToCity']
 
 def sortAirports(listAirports):
     return sa.sort(listAirports,cmpAirportdistance)
@@ -120,6 +123,10 @@ def addAirport(analyzer,airport):
     airportCode = airport['IATA']
     m.put(mapAirports,airportCode,airport)
 
+
+    addVertex(analyzer,airportCode,'CompleteAirports')
+    addVertex(analyzer,airportCode,'FullRoutes')
+
     if m.contains(analyzer['citiesUser'],airport['City']):
         citiesList =m.get(analyzer['citiesUser'],airport['City'])['value']
 
@@ -129,7 +136,9 @@ def addAirport(analyzer,airport):
         lt.addLast(citiesList,city)
         m.put(analyzer['citiesUser'],airport['City'],citiesList)
     dist_menor = inf
-    pos = 0
+    pos = 1
+    actual_city=None
+
     for city in lt.iterator(citiesList):
         distancia = calc_distancia(airport,city)
         if distancia<dist_menor:
@@ -145,11 +154,7 @@ def addAirport(analyzer,airport):
 
 def addData(route,analyzer):
 
-    addVertex(analyzer,route['Departure'],'CompleteAirports')
-    addVertex(analyzer,route['Destination'],'CompleteAirports')
 
-    addVertex(analyzer,route['Departure'],'FullRoutes')
-    addVertex(analyzer,route['Destination'],'FullRoutes')
 
     addConnection(analyzer,route['Departure'],route['Destination'],float(route['distance_km']),'CompleteAirports')
     addConnection(analyzer,route['Departure'],route['Destination'],float(route['distance_km']),'FullRoutes')
@@ -188,7 +193,9 @@ def sortbyEdges(lista):
 #↓↓Aquí comienza el req2
 def clusters(analyzer, IATA1,IATA2):
     a = scc.KosarajuSCC(analyzer['CompleteAirports'])
-    return (scc.stronglyConnected(a,IATA1,IATA2))
+    air1 = m.get(analyzer['airports'],IATA1)['value']
+    air2 = m.get(analyzer['airports'],IATA2)['value']
+    return (scc.stronglyConnected(a,IATA1,IATA2),air1,air2)
 
 #↑↑Aquí termina el req2
 
@@ -209,10 +216,10 @@ def Requerimiento3(analyzer,origin,Destiny, infOrigin,infDest):
     camino = djk.pathTo(smallgraph,Destiny)
 
     for paso in lt.iterator(camino):
-        print("{} a {}, Distancia: {}".format(paso['vertexA'],paso['vertexB'],round(paso['weight']),2))
+        # print("{} a {}, Distancia: {}".format(paso['vertexA'],paso['vertexB'],round(paso['weight']),2))
         dist_total+=paso['weight']
     
-    return str(round(dist_total,2))
+    return (OrgAirportInfo,DestArprtInfo, camino,dist_total)
 
 #Funciones auxiliares para el req3
 def selectCity(analyzer, city):
@@ -243,8 +250,13 @@ def infoCity(list_cities,pos):
     return lt.getElement(list_cities,pos)
 
 def selectAirport(list_airports,pos):
-    
     return lt.getElement(list_airports,pos)['IATA']
+
+def getAirportInfo(analyzer,airportCode,directed:bool):
+    if directed:
+        return m.get(analyzer['CompleteAirports'],airportCode)['value']
+    else:
+        return m.get(analyzer['FullRoutes'],airportCode)['value']
 #Fin del req 3
 
 #++--------------------------------------------------------------------------------------------------------------------------++
@@ -265,35 +277,44 @@ def Requerimiento4(analyzer,distancia,origin):
     spentDistance = 0
 
     for vertex in lt.iterator(gr.vertices(analyzer['CompleteAirports'])):
-
-        route = (djk.pathTo(searchStructure,vertex))
-        if route['size']>maxSize:
-            maxsize=route['size']
-            maxRoute=route
+        if djk.hasPathTo(searchStructure,vertex):
+            route = (djk.pathTo(searchStructure,vertex))
+            if stack.size(route)>maxSize:
+                maxSize=stack.size(route)
+                maxRoute=route
     
     for step in lt.iterator(maxRoute):
+
         if distancia>0:
             distancia-=step['weight']
             spentDistance+=step['weight']
 
         totalWeight +=step['weight']
 
-
+    # print(totalWeight)
+    return (maxRoute,airport)
 
 #++--------------------------------------------------------------------------------------------------------------------------++
 
 def Requerimiento5(analyzer,IATA):
     grafo = analyzer['CompleteAirports']
-    modifiedGraph = gr.removeVertex(grafo,IATA)
+    
     listReturn = lt.newList('SINGLE_LINKED',cmpfunction=None)
 
-    before = (gr.numVertices(modifiedGraph),gr.numEdges(grafo))
-    after = (gr.numVertices(modifiedGraph),gr.numEdges(modifiedGraph))
+    before = (gr.numVertices(grafo),gr.numEdges(grafo))
+    numvertexBefore = gr.numVertices(grafo)
+    numEdgesBefore = gr.numEdges(grafo)
+    numEdgesAfter = numEdgesBefore
 
-    for edge in lt.iterator(gr.edges(grafo)):
-        if edge['vertexB']== IATA:
-            lt.addLast(listReturn,edge['vertexA'])
-    print(lt.size(listReturn))
+    for edge in lt.iterator(adjacentEdges(grafo,IATA)):
+
+        lt.addLast(listReturn,edge['vertexB'])
+        numEdgesAfter-=1
+
+
+    # listReturn=((adjacentEdges(grafo,IATA)))
+    print((numvertexBefore,numEdgesBefore), (numvertexBefore-1,numEdgesAfter))
+    # print(listReturn)
     return listReturn
 
 #++--------------------------------------------------------------------------------------------------------------------------++
@@ -306,10 +327,9 @@ def calc_distancia(airport,city):
     lat2 = float(city['lat'])
     long1=float(airport['Longitude'])
     long2=float(city['lng'])
-    a = (mt.sin((lat2-lat1)/2)**2)+mt.cos(lat1)*mt.cos(lat2)*(mt.sin((long2-long1/2))**2)
-    c=2*mt.atan2(mt.sqrt(a),mt.sqrt(1-a))
-    d= r*c
-    return d
+
+    return  haversine((lat1,long1),(lat2,long2))
+
 
 def dist_cities(city1,city2):
     r=6371

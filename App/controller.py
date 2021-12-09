@@ -49,7 +49,7 @@ def load(analyzer,file):
     city_file = cf.data_dir+'worldcities-utf8.csv'
     file_cities = csv.DictReader(open(city_file,encoding='utf-8'),delimiter=',')
 
-    airports_file = cf.data_dir+'airports-utf8-large.csv'
+    airports_file = cf.data_dir+'airports-utf8-small.csv'
     file_ariports = csv.DictReader(open(airports_file,encoding='utf-8'),delimiter=',')
 
     for city in file_cities:
@@ -77,8 +77,8 @@ def req4(analyzer,distancia, origin):
     return model.Requerimiento4(analyzer,distancia,origin)
 
 
-def req5(codIATA):
-    pass
+def req5(analyzer,codIATA):
+    return model.Requerimiento5(analyzer,codIATA)
 
 
 def bono(ciudadOrigen, ciudadDestino):
