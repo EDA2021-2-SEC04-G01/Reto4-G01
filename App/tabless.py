@@ -1,9 +1,12 @@
 from App.controller import load
+from App.model import addAirport
 from DISClib.ADT import list as lt
 from DISClib.ADT import map as m
 from tabulate import tabulate
 import textwrap
 from datetime import datetime as dt
+
+from DISClib.ADT.stack import pop
 #CREACIÓN DE TABLAS
 def distribuir(elemento,cantidad):
     str_distribuido = '\n'.join((textwrap.wrap(elemento,cantidad)))
@@ -32,7 +35,7 @@ def selectInfo(position,listViews,FilteredList):
 def createTable(filteredList):
 
     listTable =[]
-    for position in range(6):
+    for position in range(1,6):
         selectInfo(position,filteredList,listTable)
 
     headers = ['Name','City','Country','IATA','Connections','Inbound','Outbound']
@@ -116,6 +119,59 @@ def getInfo(pos,listAirports,analyzer):
     airport = lt.getElement(listAirports,pos)
     airports = analyzer['airports']
     airport = m.get(airports,airport)['value']
+    code = chkUnknown(airport,'IATA')
+    name = chkUnknown(airport,'Name')
+    city = chkUnknown(airport,'City')
+    country = chkUnknown(airport,'Country')
+    return [code,name,city,country]
+
+def FirstLastTable(listAirports,analyzer):
+    headers = ['IATA','Name','City','Country']
+    infoTable = []
+
+    if lt.size(listAirports)>6:
+        
+        infoTable.append(getInfoOption2(1,listAirports,analyzer))  
+
+        infoTable.append(getInfoOption2(lt.size(listAirports)+1,listAirports,analyzer))  
+
+    else:
+        for pos in range(1,lt.size(listAirports)+1):
+            infoTable.append(getInfoOption2(pos,listAirports,analyzer))
+
+    table = tabulate(infoTable,headers=headers, tablefmt='grid',numalign='right')
+
+    return table
+
+def FirstLastCity(listCities,analyzer):
+    headers = ['City','Country','Latitude','Longitude','Population']
+    infoTable = []
+
+    if lt.size(listCities)>6:
+        
+        infoTable.append(getInfoCity(1,listCities,analyzer))  
+
+        infoTable.append(getInfoCity(lt.size(listCities)+1,listCities,analyzer))  
+
+    else:
+        for pos in range(1,lt.size(listCities)+1):
+            infoTable.append(getInfoCity(pos,listCities,analyzer))
+
+    table = tabulate(infoTable,headers=headers, tablefmt='grid',numalign='right')
+
+    return table
+
+def getInfoCity(pos,listCities,analyzer):
+    city = lt.getElement(listCities,pos)
+    name = chkUnknown(city,'city')
+    country = chkUnknown(city,'country')
+    latitude = chkUnknown(city,'lat')
+    longitude = chkUnknown(city,'lng')
+    population = chkUnknown(city,'population')
+    return [name,country,latitude,longitude,population]
+
+def getInfoOption2(pos,listCities,analyzer):
+    airport = lt.getElement(listCities,pos)
     code = chkUnknown(airport,'IATA')
     name = chkUnknown(airport,'Name')
     city = chkUnknown(airport,'City')

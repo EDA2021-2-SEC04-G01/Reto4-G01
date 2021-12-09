@@ -65,7 +65,36 @@ def thread_cycle():
         if int(inputs[0]) == 1:
             print("Cargando información de los archivos ....")
             controller.load(analyzer,'routes-utf8-small.csv')
-            print(gr.numVertices(analyzer['CompleteAirports']))
+
+            firstAirport = lt.firstElement(analyzer['loadedAirports'])
+            lastAirport = lt.lastElement(analyzer['loadedAirports'])
+            firtslastAirport = lt.newList(datastructure='SINGLE_LINKED',cmpfunction=None)
+            lt.addLast(firtslastAirport,firstAirport)
+            lt.addLast(firtslastAirport,lastAirport)
+            analyzer['loadedAirports']=None
+            
+            firstCity = lt.firstElement(analyzer['loadedCities'])
+            lastCity = lt.lastElement(analyzer['loadedCities'])
+            firtslastCity = lt.newList(datastructure='SINGLE_LINKED',cmpfunction=None)
+            lt.addLast(firtslastCity,firstCity)
+            lt.addLast(firtslastCity,lastCity)
+            analyzer['loadedCities']=None
+            
+
+            print("=== Airports-Routes Digraph ===")
+            print('Nodes: '+str(gr.numVertices(analyzer['CompleteAirports'])))
+            print('Edge: '+str(gr.numEdges(analyzer['CompleteAirports'])))
+            print('First & Last Airport loaded in the Digraph.')
+            print(tabless.FirstLastTable(firtslastAirport,analyzer))
+            print("=== Airports-Routes Graph ===")
+            print('Nodes: '+str(gr.numVertices(analyzer['FullRoutes'])))
+            print('Edge: '+str(gr.numEdges(analyzer['FullRoutes'])))            
+            print('First & Last Airport loaded in the Digraph.')
+            print(tabless.FirstLastTable(firtslastAirport,analyzer))
+            print('=== City Network ===')
+            print('The number of the cities are: '+str(m.size(analyzer['citiesUser'])))
+            print('First & Last Airport loaded in the data structure')
+            print(tabless.FirstLastCity(firtslastCity,analyzer))
 
         elif int(inputs[0]) == 2:
             print('========== Req No. 1 Inputs ========== \n')
@@ -97,26 +126,27 @@ def thread_cycle():
             list_cities = model.selectCity(analyzer,ciudadOrigen)
             pos = int(input("Seleccione a la ciudad específica: "))
             infOrigin = model.infoCity(list_cities,pos)
-            list_airports = model.showAirports(list_cities,pos)
+            airport = model.showAirports(list_cities,pos)
             pos = int(input("Seleccione el aeropuerto de salida: "))
-            aerSalida = model.selectAirport(list_airports,pos)
+            aerSalida = model.selectAirport(airport,pos)
             
 
             ciudadDestino=input("Inserte el nombre de la ciudad de destino: ").strip()
             list_cities = model.selectCity(analyzer,ciudadDestino)
             pos = int(input("Seleccione a la ciudad específica: "))
             infDest = model.infoCity(list_cities,pos)
-            list_airports = model.showAirports(list_cities,pos)
+            airport = model.showAirports(list_cities,pos)
             pos = int(input("Seleccione el aeropuerto de destino: "))
-            aerDestino = model.selectAirport(list_airports,pos)
-
-            print("vamos de {} para {}".format(aerSalida,aerDestino))
-            print( "+++ The departure airport in St. Petersburg is: ")
-            print(tabless.infoTable(rta[0]))
-            print("The arrival airport in Lisbon is: ")
-            print(tabless.infoTable(rta[1]))
+            aerDestino = model.selectAirport(airport,pos)
 
             rta=model.Requerimiento3(analyzer,aerSalida,aerDestino,infOrigin,infDest)
+            print("vamos de {} para {}".format(aerSalida,aerDestino))
+            print( "+++ The departure airport in {} is: ".format(ciudadOrigen))
+            print(tabless.infoTable(rta[0]))
+            print("The arrival airport in {} is: ".format(ciudadDestino))
+            print(tabless.infoTable(rta[1]))
+
+            
             print(tabless.tripTable(rta[2]))
             print("\nTrip stops")
             print(tabless.tableStops(rta[2],analyzer))
@@ -125,25 +155,53 @@ def thread_cycle():
 
 
         elif int(inputs[0]) == 5:
+            
             ciudadOrigen=input("Inserte el nombre de la ciudad de origen: ")
             list_cities = model.selectCity(analyzer,ciudadOrigen)
             pos = int(input("Seleccione a la ciudad específica: "))
             ciudadOrigen = model.infoCity(list_cities,pos)
             cantidadMillas=float(input("Inserte la cantidad de millas disponibles: "))
 
+            airport = (lt.firstElement(ciudadOrigen['airports']))['IATA']
+
+            print('=============== Req No. 4 Inputs ===============')
+            print('Departure IATA code: '+str(airport))
+            print('Avilable Travel Miles: '+str(cantidadMillas))
             rta=controller.req4(analyzer,cantidadMillas,ciudadOrigen)
+            print('=============== Req no. 5 Answer ===============')
+            print('+++ Departure Airport for IATA Code: '+str(airport)+' +++\n')
 
             print(tabless.infoTable(rta[1]))
+            print("- Number of possible airports: "+str(rta[2])+".")
+            print("- Traveling distance sum between aiports: "+str(rta[3])+" (km).")
+            print("- Passenger available traveling miles: "+str(round(cantidadMillas*1.6,2))+" (km).\n")
+            print("+++ Longest possible route with airport "+ str(airport)+" +++")
+            print("- Longests possible path distance: "+str(rta[4])+" (km)")
+            print("- Longests possible path details: ")
             print(tabless.tripTable(rta[0]))
+            print("-------")
+            print("The passenger needs "+str(rta[5])+" miles to complete the trip.")
+            print("-------")
             
-            # print(rta)
 
 
         elif int(inputs[0]) == 6:
             codigoIATA=input("Ingrese el codigo IATA del aeropuerto de funcionamiento: ")
-            
             rta=controller.req5(analyzer,codigoIATA)
-            print(tabless.FirstLast3Table(rta,analyzer))
+            print('=============== Req No. 5 Inputs ===============')
+            print('closing the airport with IATA code: '+str(codigoIATA))
+            print('--- Airports-Routes DiGraph ---')
+            print('Original number of Airports: '+ str(gr.numVertices(analyzer['CompleteAirports']))+' and Routes: '+str(rta[1]))
+            print('--- Airports-Routes Grapf ---')
+            print('Original number of Airports: '+ str(gr.numVertices(analyzer['FullRoutes']))+' and Routes: '+str(rta[2])+'\n')
+            print('+++ Remocing Airport with IATA: '+str(codigoIATA)+' +++ \n')
+            print('--- Airports-Routes DiGraph ---')
+            print('Original number of Airports: '+ str(gr.numVertices(analyzer['CompleteAirports']))+' and Routes: '+str(rta[3]))
+            print('--- Airports-Routes Grapf ---')
+            print('Original number of Airports: '+ str(gr.numVertices(analyzer['FullRoutes']))+' and Routes: '+ str(rta[4])+'\n')
+            print('=============== Req no. 5 Answer ===============')
+                       
+            print(tabless.FirstLast3Table(rta[0],analyzer))
 
 
         elif int(inputs[0]) == 7:
@@ -151,13 +209,6 @@ def thread_cycle():
             ciudadDestino=input("Inserte el nombre de la ciudad de destino: ")
             rta = controller.bono(ciudadOrigen,ciudadDestino)
 
-        elif int(inputs[0]) == 8:
-            # print(analyzer['CitiesRoutes'])
-            # print(model.Requerimiento3(analyzer,'Krasnodar--45.0333--38.9833','Yerevan--40.1814--44.5144'))
-            # model.prueba(analyzer)
-            # print(gr.numEdges(analyzer['CitiesRoutes']))
-            # print(model.Requerimiento5(analyzer,'DXB'))
-            print(model.Requerimiento4(analyzer,1890,'LIS'))
 
         else:
             sys.exit(0)
