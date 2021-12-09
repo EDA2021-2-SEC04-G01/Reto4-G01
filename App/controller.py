@@ -61,16 +61,15 @@ def load(analyzer,file):
     for route in input_file:
         model.addData(route,analyzer)
 
-def req1():
-
-    pass
+def req1(analyzer):
+    return model.Requerimiento1(analyzer)
 
 
 def req2(analyzer,Cod1,Cod2):
     return model.clusters(analyzer,Cod1,Cod2)
 
-def req3(ciudadOrigen,ciudadDestino):
-    pass
+def req3(analyzer,origin,Destiny,infOrigin,infDest):
+    return model.Requerimiento3(analyzer,origin,Destiny,infOrigin,infDest)
 
 
 def req4(analyzer,distancia, origin):

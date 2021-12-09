@@ -100,7 +100,7 @@ def thread_cycle():
             print('========== Req No. 1 Inputs ========== \n')
             print('Most connected airports in network (TOP 5)')
             print('Number of airports in network: '+ str(gr.numVertices(analyzer['CompleteAirports']))+'\n')
-            rta = model.Requerimiento1(analyzer)
+            rta = controller.req1(analyzer)
             print('========== Req No. 1 Answer ========== \n')
             print('Connected airports inside network: '+str(lt.size(rta)))
             print('Top 5 most connected airports... \n')
@@ -139,7 +139,7 @@ def thread_cycle():
             pos = int(input("Seleccione el aeropuerto de destino: "))
             aerDestino = model.selectAirport(airport,pos)
 
-            rta=model.Requerimiento3(analyzer,aerSalida,aerDestino,infOrigin,infDest)
+            rta=controller.req3(analyzer,aerSalida,aerDestino,infOrigin,infDest)
             print("vamos de {} para {}".format(aerSalida,aerDestino))
             print( "+++ The departure airport in {} is: ".format(ciudadOrigen))
             print(tabless.infoTable(rta[0]))
@@ -200,15 +200,14 @@ def thread_cycle():
             print('--- Airports-Routes Grapf ---')
             print('Original number of Airports: '+ str(gr.numVertices(analyzer['FullRoutes']))+' and Routes: '+ str(rta[4])+'\n')
             print('=============== Req no. 5 Answer ===============')
-                       
+
             print(tabless.FirstLast3Table(rta[0],analyzer))
 
 
         elif int(inputs[0]) == 7:
             ciudadOrigen=input("Inserte el nombre de la ciudad de origen: ")
             ciudadDestino=input("Inserte el nombre de la ciudad de destino: ")
-            rta = controller.bono(ciudadOrigen,ciudadDestino)
-
+            rta = controller.bono(ciudadOrigen,ciudadDestino)         
 
         else:
             sys.exit(0)
